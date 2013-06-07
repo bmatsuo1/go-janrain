@@ -14,9 +14,8 @@ signature to API requests.
 
 	creds := capture.ClientCredentials{"myclientid", "myclientsecret"}
 	client := capture.NewClient("https://myapp.janraincapture.com", creds)
-	filter := fmt.Sprintf("created > '%v'", time.Now().Add(-5*time.Hour))
-	resp, _ := client.Execute("/entity.find", capture.Params{
-		"filter": filter
+	resp, _ := client.Execute("/entity.count", capture.Params{
+		"type_name": "user"
 	})
 	for _, entity := resp.Get("results").MustArray() {
 		// ...
@@ -31,6 +30,7 @@ tied to that user.
 	client := capture.NewClient("https://myapp.janraincapture.com", token)
 	resp, _ := client.Execute("/entity")
 	entity := resp.Get("result")
+
 	// ...
 
 Authorization override
@@ -41,15 +41,28 @@ EntityAuth method.
 	creds := capture.ClientCredentials{"myclientid", "myclientsecret"}
 	client := capture.NewClient("https://myapp.janraincapture.com", creds)
 
+	// request authorized by access token
 	token := capture.AccessToken(req.FormValue("access_token"))
 	resp, _ := client.ExecuteAuth("/entity", token)
+	fmt.Println(resp)
 
+	// request authorized by client credentials
 	givenName := entity.Get("givenName").MustString()
-	filter := capture.Filter("givenName =", givenName)
-	resp, _ := client.Execute("/entity.find", capture.Params{
-		"filter": filter,
+	resp, _ = client.Execute("/entity.count", capture.Params{
+		"type_name": "user",
 	})
+	fmt.Println(resp)
+
 	//..
+
+Filter strings
+
+Type safe filter strings can be generated using the package
+
+	github.com/bmatsuo1/go-janrain/capture/filter.
+
+See it's documentation for more information.
+
 */
 package capture
 
@@ -84,7 +97,7 @@ func Date(datestamp string) (time.Time, error) {
 	return time.Parse(DateFormat, datestamp)
 }
 
-// API request parameters
+// API request parameters.
 type Params map[string]interface{}
 
 func (ps Params) formValues() (url.Values, error) {

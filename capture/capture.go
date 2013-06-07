@@ -78,23 +78,44 @@ import (
 	"time"
 )
 
+func prepare(method string, uri *url.URL, header http.Header, values url.Values) (*http.Request, error) {
+	var body io.Reader
+	if method == "POST" {
+		body = strings.NewReader(values.Encode())
+		header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	req, err := http.NewRequest(method, uri.String(), body)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range header {
+		req.Header[k] = v
+	}
+	return req, nil
+}
+
+// the date and time formats returned by the Capture API
 var DateFormat = "2006-01-02"
 var TimeFormat = "2006-01-02 15:04:05.999999999 -0700"
 
+// create a time from a timestamp returned by capture
 func Time(timestamp string) (time.Time, error) {
 	return time.Parse(TimeFormat, timestamp)
 }
 
+// create a timestamp for passing to capture (e.g. assign to an entity attribute)
 func Timestamp(t time.Time) string {
 	return t.Format(TimeFormat)
 }
 
-func Datestamp(t time.Time) string {
-	return t.Format(DateFormat)
-}
-
+// create a time.Time from a datestamp retured by the Capture API
 func Date(datestamp string) (time.Time, error) {
 	return time.Parse(DateFormat, datestamp)
+}
+
+// create a datestamp for passing to capture (e.g. to assign to an entity attribute)
+func Datestamp(t time.Time) string {
+	return t.Format(DateFormat)
 }
 
 // API request parameters.
@@ -116,7 +137,7 @@ func (ps Params) formValues() (url.Values, error) {
 	return vals, nil
 }
 
-// an error returned by the Janrain Capture API.
+// an error returned by the Capture API.
 type RemoteError struct {
 	Code        int
 	Kind        string
@@ -136,88 +157,6 @@ func NewRemoteError(js *simplejson.Json) RemoteError {
 
 func (err RemoteError) Error() string {
 	return fmt.Sprintf("%s (%d) %s", err.Kind, err.Code, err.Description)
-}
-
-// an API client.
-type Client struct {
-	baseurl string
-	auth    Authorization
-	header  http.Header
-	params  Params
-	http    *http.Client
-}
-
-// construct a new API client. though auth can be nil it is generally
-// recommended a value be passed as calls to the API generally require
-// authorization.
-func NewClient(baseurl string, auth Authorization) *Client {
-	client := &Client{
-		baseurl: baseurl,
-		auth:    auth,
-		params:  make(Params),
-		header:  make(http.Header),
-		http:    new(http.Client),
-	}
-	return client
-}
-
-// execute an API call with the Authorization used to initialize the client.
-func (client *Client) Execute(method string, params Params) (*simplejson.Json, error) {
-	return client.ExecuteAuth(nil, method, params)
-}
-
-// execute an API call with an Authorization that overrides the value used to
-// initialize the client.
-func (client *Client) ExecuteAuth(auth Authorization, method string, params Params) (*simplejson.Json, error) {
-	uri, header, values, err := client.merge(method, params)
-	if err != nil {
-		return nil, err
-	}
-
-	if auth == nil {
-		auth = client.auth
-	}
-	//fmt.Println("auth ", auth)
-	if auth != nil {
-		err = auth.Authorize(uri, header, values)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	req, err := prepare("POST", uri, header, values)
-	return client.perform(req)
-}
-
-func (client *Client) merge(method string, params Params) (*url.URL, http.Header, url.Values, error) {
-	endpoint := client.baseurl
-	if method[0] != '/' {
-		endpoint += "/"
-	}
-	endpoint += method
-	uri, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	header := make(http.Header)
-	for k, v := range client.header {
-		header[k] = v
-	}
-
-	mergedparams := make(Params, len(client.params)+len(params))
-	for k, v := range client.params {
-		mergedparams[k] = v
-	}
-	for k, v := range params {
-		mergedparams[k] = v
-	}
-	values, err := mergedparams.formValues()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	return uri, header, values, nil
 }
 
 // an error in http communication.
@@ -243,62 +182,4 @@ type ContentTypeError string
 
 func (err ContentTypeError) Error() string {
 	return fmt.Sprintf("unexpected content-type %q", err)
-}
-
-func (client *Client) perform(req *http.Request) (*simplejson.Json, error) {
-	resp, err := client.http.Do(req)
-	if err != nil {
-		return nil, HttpTransportError{err}
-	}
-	defer resp.Body.Close()
-	switch mime := resp.Header.Get("Content-Type"); mime {
-	case "application/json", "text/json":
-		dec := json.NewDecoder(resp.Body)
-		js := new(simplejson.Json)
-		err := dec.Decode(js)
-		if err != nil {
-			return nil, JsonDecoderError{err}
-		}
-		if js.Get("stat").MustString() != "ok" {
-			return nil, NewRemoteError(js)
-		}
-		return js, nil
-	default:
-		return nil, ContentTypeError(mime)
-	}
-}
-
-func prepare(method string, uri *url.URL, header http.Header, values url.Values) (*http.Request, error) {
-	//fmt.Println(uri)
-	//fmt.Println(header)
-	//fmt.Println(values.Encode())
-	var body io.Reader
-	if method == "POST" {
-		body = strings.NewReader(values.Encode())
-		header.Set("Content-Type", "application/x-www-form-urlencoded")
-	}
-	req, err := http.NewRequest(method, uri.String(), body)
-	if err != nil {
-		return nil, err
-	}
-	for k, v := range header {
-		req.Header[k] = v
-	}
-	//fmt.Println(req)
-	return req, nil
-}
-
-type jsonStringer struct {
-	val interface{}
-}
-
-func (js jsonStringer) String() string {
-	p, _ := json.Marshal(js)
-	return string(p)
-}
-
-type jsonMap map[string]interface{}
-
-func (m jsonMap) String() string {
-	return jsonStringer{m}.String()
 }

@@ -33,7 +33,7 @@ func (token AccessToken) Authorize(uri *url.URL, header http.Header, values url.
 type ClientCredentialsSimple ClientCredentials
 
 // adds id and secret as form post parameters.
-func (creds ClientCredentialsSimple) Authorize(uri *url.URL, header http.Header, values url.Values) error {
+func (creds *ClientCredentialsSimple) Authorize(uri *url.URL, header http.Header, values url.Values) error {
 	values.Set("client_id", creds.Id)
 	values.Set("client_secret", creds.Secret)
 	return nil
@@ -45,7 +45,7 @@ type ClientCredentials struct {
 }
 
 // adds an Authorize header containing an HMAC-SHA1 signature
-func (creds ClientCredentials) Authorize(uri *url.URL, header http.Header, values url.Values) error {
+func (creds *ClientCredentials) Authorize(uri *url.URL, header http.Header, values url.Values) error {
 	ps := make([]string, 0, len(values))
 	for k := range values {
 		for _, v := range values[k] {

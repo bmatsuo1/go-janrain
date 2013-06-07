@@ -4,25 +4,27 @@
 
 // config.go [created: Sat, 25 May 2013]
 
-package capture
+package config
 
 import (
+	"github.com/bmatsuo1/go-janrain/capture"
+
 	"encoding/json"
 	"io"
 	"os"
 )
 
 type Config struct {
-	Cli     *CLIConfig                    `json:"cli" yaml:"cli,omitempty"`
-	Apps    map[string]*AppConfig         `json:"apps" yaml:"apps"`
-	Clients map[string]*ClientCredentials `json:"clients,omitempty" yaml:"clients,omitempty"`
+	Cli     *CLIConfig                            `json:"cli" yaml:"cli,omitempty"`
+	Apps    map[string]*AppConfig                 `json:"apps" yaml:"apps"`
+	Clients map[string]*capture.ClientCredentials `json:"clients,omitempty" yaml:"clients,omitempty"`
 }
 
 type AppConfig struct {
-	Domain        string                        `json:"domain" yaml:"domain"`
-	AppId         string                        `json:"app_id,omitempty" yaml:"app_id,omitempty"`
-	DefaultClient string                        `json:"default_client,omitempty" yaml:"default_client,omitempty"`
-	Clients       map[string]*ClientCredentials `json:"clients,omitempty" yaml:"clients,omitempty"`
+	Domain        string                                `json:"domain" yaml:"domain"`
+	AppId         string                                `json:"app_id,omitempty" yaml:"app_id,omitempty"`
+	DefaultClient string                                `json:"default_client,omitempty" yaml:"default_client,omitempty"`
+	Clients       map[string]*capture.ClientCredentials `json:"clients,omitempty" yaml:"clients,omitempty"`
 }
 
 type CLIConfig struct {

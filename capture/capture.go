@@ -73,31 +73,33 @@ import (
 	"time"
 )
 
-// the date and time formats returned by the Capture API
-var DateFormat = "2006-01-02"
-var TimeFormat = "2006-01-02 15:04:05.999999999 -0700"
-
-// create a time from a timestamp returned by capture
-func Time(timestamp string) (time.Time, error) {
-	return time.Parse(TimeFormat, timestamp)
-}
-
-// create a timestamp for passing to capture (e.g. assign to an entity attribute)
-func Timestamp(t time.Time) string {
-	return t.Format(TimeFormat)
-}
+// the date and time formats used by Capture.
+var (
+	DateFormat = "2006-01-02"
+	TimeFormat = "2006-01-02 15:04:05.999999999 -0700"
+)
 
 // create a time.Time from a datestamp retured by the Capture API
 func Date(datestamp string) (time.Time, error) {
 	return time.Parse(DateFormat, datestamp)
 }
 
-// create a datestamp for passing to capture (e.g. to assign to an entity attribute)
+// create a datestamp for passing to Capture.
 func Datestamp(t time.Time) string {
 	return t.Format(DateFormat)
 }
 
-// an error returned by the Capture API.
+// create a time.Time from a timestamp returned by Capture.
+func Time(timestamp string) (time.Time, error) {
+	return time.Parse(TimeFormat, timestamp)
+}
+
+// create a timestamp for passing to Capture.
+func Timestamp(t time.Time) string {
+	return t.Format(TimeFormat)
+}
+
+// an error returned by Capture.
 type RemoteError struct {
 	Code        int
 	Kind        string
@@ -105,7 +107,7 @@ type RemoteError struct {
 	Response    *simplejson.Json
 }
 
-// construct an error from an API response.
+// construct an error from a Capture response.
 func NewRemoteError(js *simplejson.Json) RemoteError {
 	return RemoteError{
 		Code:        js.Get("code").MustInt(),

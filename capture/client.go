@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"unicode"
 )
 
 func prepare(method string, uri *url.URL, header http.Header, values url.Values) (*http.Request, error) {
@@ -150,13 +151,18 @@ func (client *Client) merge(method string, header http.Header, params Params) (*
 	return uri, mergedheader, values, nil
 }
 
+func contentType(resp *http.Response) string {
+	v := resp.Header.Get("Content-Type")
+	return strings.TrimFunc(strings.SplitN(v, ";", 2)[0], unicode.IsSpace)
+}
+
 func (client *Client) perform(req *http.Request) (*simplejson.Json, error) {
 	resp, err := client.http.Do(req)
 	if err != nil {
 		return nil, HttpTransportError{err}
 	}
 	defer resp.Body.Close()
-	switch mime := resp.Header.Get("Content-Type"); mime {
+	switch mime := contentType(resp); mime {
 	case "application/json", "text/json":
 		dec := json.NewDecoder(resp.Body)
 		js := new(simplejson.Json)

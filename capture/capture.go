@@ -9,7 +9,7 @@ A lightly wrapped http client library for accessing the Janrain Capture API.
 
 Client credentials
 
-API requests can be authorized using client credentials. This adds an HMAC-SHA1
+API requests can be authorized with client credentials, adding an HMAC-SHA1
 signature to API requests.
 
 	creds := capture.ClientCredentials{"myclientid", "myclientsecret"}
@@ -23,8 +23,8 @@ signature to API requests.
 
 Access tokens
 
-API requests targeting a single user can also be authorized with an access token
-tied to that user.
+API requests targeting a single user can be authorized with an access token tied
+to that user.
 
 	token := capture.AccessToken(req.FormValue("access_token"))
 	client := capture.NewClient("https://myapp.janraincapture.com", token)

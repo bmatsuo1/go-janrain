@@ -51,6 +51,10 @@ func (ps Params) formValues() (url.Values, error) {
 	return vals, nil
 }
 
+func (ps Params) Set(key string, value interface{}) {
+	ps[key] = value
+}
+
 // an API client.
 type Client struct {
 	baseurl string
@@ -79,20 +83,20 @@ func (client *Client) Execute(method string, header http.Header, params Params) 
 	return client.ExecuteAuth(nil, method, header, params)
 }
 
-// define a parameter that should be included in every request.
-func (client *Client) Default(param string, value interface{}) {
-	client.params[param] = value
+// a set of params sent with every API call.
+func (client *Client) Params() Params {
+	return client.params
 }
 
-// remove a default value previously specified with client.Default.
-func (client *Client) DefaultClear(param string) {
-	delete(client.params, param)
+// a set of headers sent with every API call.
+func (client *Client) Header() http.Header {
+	return client.header
 }
 
 // execute an API call with an Authorization that overrides the value used to
 // initialize the client.
 func (client *Client) ExecuteAuth(auth Authorization, method string, header http.Header, params Params) (*simplejson.Json, error) {
-	uri, header, values, err := client.merge(method, params)
+	uri, header, values, err := client.merge(method, header, params)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +116,7 @@ func (client *Client) ExecuteAuth(auth Authorization, method string, header http
 	return client.perform(req)
 }
 
-func (client *Client) merge(method string, params Params) (*url.URL, http.Header, url.Values, error) {
+func (client *Client) merge(method string, header http.Header, params Params) (*url.URL, http.Header, url.Values, error) {
 	endpoint := client.baseurl
 	if method[0] != '/' {
 		endpoint += "/"
@@ -123,9 +127,12 @@ func (client *Client) merge(method string, params Params) (*url.URL, http.Header
 		return nil, nil, nil, err
 	}
 
-	header := make(http.Header)
+	mergedheader := make(http.Header)
 	for k, v := range client.header {
-		header[k] = v
+		mergedheader[k] = v
+	}
+	for k, v := range header {
+		mergedheader[k] = v
 	}
 
 	mergedparams := make(Params, len(client.params)+len(params))
@@ -140,7 +147,7 @@ func (client *Client) merge(method string, params Params) (*url.URL, http.Header
 		return nil, nil, nil, err
 	}
 
-	return uri, header, values, nil
+	return uri, mergedheader, values, nil
 }
 
 func (client *Client) perform(req *http.Request) (*simplejson.Json, error) {

@@ -14,7 +14,7 @@ signature to API requests.
 
 	creds := capture.ClientCredentials{"myclientid", "myclientsecret"}
 	client := capture.NewClient("https://myapp.janraincapture.com", creds)
-	resp, _ := client.Execute("/entity.count", capture.Params{
+	resp, _ := client.Execute("/entity.count", nil, capture.Params{
 		"type_name": "user"
 	})
 	for _, entity := resp.Get("results").MustArray() {
@@ -28,7 +28,7 @@ tied to that user.
 
 	token := capture.AccessToken(req.FormValue("access_token"))
 	client := capture.NewClient("https://myapp.janraincapture.com", token)
-	resp, _ := client.Execute("/entity")
+	resp, _ := client.Execute("/entity", nil, nil)
 	entity := resp.Get("result")
 
 	// ...
@@ -36,19 +36,19 @@ tied to that user.
 Authorization override
 
 The two authorization methods can be mixed within the same client using the
-EntityAuth method.
+ExecuteAuth method.
 
 	creds := capture.ClientCredentials{"myclientid", "myclientsecret"}
 	client := capture.NewClient("https://myapp.janraincapture.com", creds)
 
 	// request authorized by access token
 	token := capture.AccessToken(req.FormValue("access_token"))
-	resp, _ := client.ExecuteAuth("/entity", token)
+	resp, _ := client.ExecuteAuth(token, "/entity", nil, nil)
 	fmt.Println(resp)
 
 	// request authorized by client credentials
 	givenName := entity.Get("givenName").MustString()
-	resp, _ = client.Execute("/entity.count", capture.Params{
+	resp, _ = client.Execute("/entity.count", nil, capture.Params{
 		"type_name": "user",
 	})
 	fmt.Println(resp)
@@ -69,30 +69,9 @@ package capture
 import (
 	"github.com/bitly/go-simplejson"
 
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"strings"
 	"time"
 )
-
-func prepare(method string, uri *url.URL, header http.Header, values url.Values) (*http.Request, error) {
-	var body io.Reader
-	if method == "POST" {
-		body = strings.NewReader(values.Encode())
-		header.Set("Content-Type", "application/x-www-form-urlencoded")
-	}
-	req, err := http.NewRequest(method, uri.String(), body)
-	if err != nil {
-		return nil, err
-	}
-	for k, v := range header {
-		req.Header[k] = v
-	}
-	return req, nil
-}
 
 // the date and time formats returned by the Capture API
 var DateFormat = "2006-01-02"
@@ -116,25 +95,6 @@ func Date(datestamp string) (time.Time, error) {
 // create a datestamp for passing to capture (e.g. to assign to an entity attribute)
 func Datestamp(t time.Time) string {
 	return t.Format(DateFormat)
-}
-
-// API request parameters.
-type Params map[string]interface{}
-
-func (ps Params) formValues() (url.Values, error) {
-	vals := make(url.Values, len(ps))
-	for k, v := range ps {
-		val, ok := v.(string)
-		if !ok {
-			p, err := json.Marshal(v)
-			if err != nil {
-				return nil, err
-			}
-			val = string(p)
-		}
-		vals.Set(k, val)
-	}
-	return vals, nil
 }
 
 // an error returned by the Capture API.

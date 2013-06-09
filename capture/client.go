@@ -10,9 +10,46 @@ import (
 	"github.com/bitly/go-simplejson"
 
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
+
+func prepare(method string, uri *url.URL, header http.Header, values url.Values) (*http.Request, error) {
+	var body io.Reader
+	if method == "POST" {
+		body = strings.NewReader(values.Encode())
+		header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	req, err := http.NewRequest(method, uri.String(), body)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range header {
+		req.Header[k] = v
+	}
+	return req, nil
+}
+
+// API request parameters.
+type Params map[string]interface{}
+
+func (ps Params) formValues() (url.Values, error) {
+	vals := make(url.Values, len(ps))
+	for k, v := range ps {
+		val, ok := v.(string)
+		if !ok {
+			p, err := json.Marshal(v)
+			if err != nil {
+				return nil, err
+			}
+			val = string(p)
+		}
+		vals.Set(k, val)
+	}
+	return vals, nil
+}
 
 // an API client.
 type Client struct {
@@ -38,13 +75,23 @@ func NewClient(baseurl string, auth Authorization) *Client {
 }
 
 // execute an API call with the Authorization used to initialize the client.
-func (client *Client) Execute(method string, params Params) (*simplejson.Json, error) {
-	return client.ExecuteAuth(nil, method, params)
+func (client *Client) Execute(method string, header http.Header, params Params) (*simplejson.Json, error) {
+	return client.ExecuteAuth(nil, method, header, params)
+}
+
+// define a parameter that should be included in every request.
+func (client *Client) Default(param string, value interface{}) {
+	client.params[param] = value
+}
+
+// remove a default value previously specified with client.Default.
+func (client *Client) DefaultClear(param string) {
+	delete(client.params, param)
 }
 
 // execute an API call with an Authorization that overrides the value used to
 // initialize the client.
-func (client *Client) ExecuteAuth(auth Authorization, method string, params Params) (*simplejson.Json, error) {
+func (client *Client) ExecuteAuth(auth Authorization, method string, header http.Header, params Params) (*simplejson.Json, error) {
 	uri, header, values, err := client.merge(method, params)
 	if err != nil {
 		return nil, err

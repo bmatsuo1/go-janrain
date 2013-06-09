@@ -24,7 +24,7 @@ type Authorization interface {
 
 type AccessToken string
 
-// adds an Authorize header containing the access token
+// adds an Authorization header containing the access token
 func (token AccessToken) Authorize(uri *url.URL, header http.Header, values url.Values) error {
 	header.Set("Authorization", "OAuth "+string(token))
 	return nil
@@ -44,7 +44,7 @@ type ClientCredentials struct {
 	Secret string `json:"secret" yaml:"secret"`
 }
 
-// adds an Authorize header containing an HMAC-SHA1 signature
+// adds an Authorization header containing an HMAC-SHA1 signature
 func (creds *ClientCredentials) Authorize(uri *url.URL, header http.Header, values url.Values) error {
 	ps := make([]string, 0, len(values))
 	for k := range values {

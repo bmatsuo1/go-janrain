@@ -15,22 +15,20 @@ import (
 )
 
 type Config struct {
-	Cli     *CLIConfig                            `json:"cli" yaml:"cli,omitempty"`
-	Apps    map[string]*AppConfig                 `json:"apps" yaml:"apps"`
-	Clients map[string]*capture.ClientCredentials `json:"clients,omitempty" yaml:"clients,omitempty"`
+	Cli     *CLIConfig                            `json:"cli,omitempty"`
+	Apps    map[string]*AppConfig                 `json:"apps"`
+	Clients map[string]*capture.ClientCredentials `json:"clients,omitempty"`
 }
 
 type AppConfig struct {
-	Domain        string                                `json:"domain" yaml:"domain"`
-	AppId         string                                `json:"app_id,omitempty" yaml:"app_id,omitempty"`
-	DefaultClient string                                `json:"default_client,omitempty" yaml:"default_client,omitempty"`
-	Clients       map[string]*capture.ClientCredentials `json:"clients,omitempty" yaml:"clients,omitempty"`
+	Domain        string                                `json:"domain"`
+	AppId         string                                `json:"app_id,omitempty"`
+	DefaultClient string                                `json:"default_client,omitempty"`
+	Clients       map[string]*capture.ClientCredentials `json:"clients,omitempty"`
 }
 
 type CLIConfig struct {
 }
-
-// json
 
 type indentedJSON struct {
 	val    interface{}
@@ -49,12 +47,21 @@ func (js *indentedJSON) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(js.val, js.prefix, js.indent)
 }
 
-func WriteConfigJSON(w io.Writer, config *Config) error {
+func WriteJSON(w io.Writer, config *Config) error {
 	enc := json.NewEncoder(w)
 	return enc.Encode(newIndentedJSON(config))
 }
 
-func ReadConfigJSON(r io.Reader) (*Config, error) {
+func WriteFileJSON(filename string, config *Config) error {
+	handle, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer handle.Close()
+	return WriteJSON(handle, config)
+}
+
+func ReadJSON(r io.Reader) (*Config, error) {
 	config := new(Config)
 	dec := json.NewDecoder(r)
 	err := dec.Decode(config)
@@ -64,11 +71,11 @@ func ReadConfigJSON(r io.Reader) (*Config, error) {
 	return config, nil
 }
 
-func ReadConfigFileJSON(filename string) (*Config, error) {
+func ReadFileJSON(filename string) (*Config, error) {
 	handle, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer handle.Close()
-	return ReadConfigJSON(handle)
+	return ReadJSON(handle)
 }

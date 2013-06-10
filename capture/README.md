@@ -1,32 +1,22 @@
-[install go]: http://golang.org/install.html "Install Go"
-[gopkgdoc]: http://go.pkgdoc.org/github.com/bmatsuo1/capture/ "GoPkgDoc"
+[godoc.org]: http://godoc.org/github.com/bmatsuo1/go-janrain/capture "godoc.org"
 
 About
-=============
+=====
 
-<no value>
+A Go package for interacting with the Janrain Capture.
 
 Documentation
 =============
 
-Prerequisites
--------------
-
-[Install Go][].
-
 Installation
 -------------
 
-    go get github.com/bmatsuo1/capture
+    go get github.com/bmatsuo1/go-janrain
 
 General Documentation
 ---------------------
 
-Use `go doc` to vew the documentation for capture
-
-    go doc github.com/bmatsuo1/capture
-
-Or alternatively, check out [GoPkgDoc][]
+[godoc.org][]
 
 Author
 ======

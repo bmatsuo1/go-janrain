@@ -1,18 +1,12 @@
-[install go]: http://golang.org/install.html "Install Go"
-[gopkgdoc]: http://go.pkgdoc.org/github.com/bmatsuo/filter/ "GoPkgDoc"
+[godoc.org]: http://go.pkgdoc.org/github.com/bmatsuo/go-janrain/capturefilter/ "godoc.org"
 
 About
 =============
 
-<no value>
+A package for constructing filter strings passed to the Capture API
 
 Documentation
 =============
-
-Prerequisites
--------------
-
-[Install Go][].
 
 Installation
 -------------
@@ -22,11 +16,7 @@ Installation
 General Documentation
 ---------------------
 
-Use `go doc` to vew the documentation for filter
-
-    go doc github.com/bmatsuo/filter
-
-Or alternatively, check out [GoPkgDoc][]
+[godoc.org][]
 
 Author
 ======

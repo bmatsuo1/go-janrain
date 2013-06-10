@@ -1,32 +1,22 @@
-[install go]: http://golang.org/install.html "Install Go"
-[gopkgdoc]: http://go.pkgdoc.org/github.com/bmatsuo1/janrain/ "GoPkgDoc"
+[godoc.org]: http://go.pkgdoc.org/github.com/bmatsuo1/go-janrain/ "godoc.org"
 
 About
 =============
 
-<no value>
+A Go package for interacting with Janrain APIs
 
 Documentation
 =============
 
-Prerequisites
--------------
-
-[Install Go][].
-
 Installation
 -------------
 
-    go get github.com/bmatsuo1/janrain
+    go get github.com/bmatsuo1/go-janrain
 
 General Documentation
 ---------------------
 
-Use `go doc` to vew the documentation for go-janrain
-
-    go doc github.com/bmatsuo1/janrain
-
-Or alternatively, check out [GoPkgDoc][]
+[godoc.org][]
 
 Author
 ======

@@ -13,11 +13,11 @@ API requests can be authorized with client credentials, adding an HMAC-SHA1
 signature to API requests.
 
 	creds := capture.ClientCredentials{"myclientid", "myclientsecret"}
-	client := capture.NewClient("https://myapp.janraincapture.com", creds)
+	client := capture.NewClient("https://myapp.janraincapture.com", &creds)
 	resp, _ := client.Execute("/entity.count", nil, capture.Params{
 		"type_name": "user"
 	})
-	for _, entity := resp.Get("results").MustArray() {
+	for _, entity := range resp.Get("results").MustArray() {
 		// ...
 	}
 
@@ -39,7 +39,7 @@ The two authorization methods can be mixed within the same client using the
 ExecuteAuth method.
 
 	creds := capture.ClientCredentials{"myclientid", "myclientsecret"}
-	client := capture.NewClient("https://myapp.janraincapture.com", creds)
+	client := capture.NewClient("https://myapp.janraincapture.com", &creds)
 
 	// request authorized by access token
 	token := capture.AccessToken(req.FormValue("access_token"))

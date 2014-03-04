@@ -54,7 +54,7 @@ func (creds *ClientCredentials) Authorize(uri *url.URL, header http.Header, valu
 		}
 	}
 	sort.Strings(ps)
-	timestamp := time.Now().String()
+	timestamp := time.Now().UTC().Format("2006-01-02 15:04:05")
 	tosign := uri.Path
 	tosign += "\n"
 	tosign += timestamp
@@ -68,7 +68,7 @@ func (creds *ClientCredentials) Authorize(uri *url.URL, header http.Header, valu
 	if err != nil {
 		return err
 	}
-	sig := base64.URLEncoding.EncodeToString(hash.Sum(nil))
+	sig := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 	header.Set("Date", timestamp)
 	header.Set("Authorization", fmt.Sprintf("Signature %s:%s", creds.Id, sig))
 	return nil

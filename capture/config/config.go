@@ -4,6 +4,10 @@
 
 // config.go [created: Sat, 25 May 2013]
 
+/*
+This package defines a configuration file format meant to house many client ids.
+The idea was to have a new CLI for capture. But one does not exist.
+*/
 package config
 
 import (

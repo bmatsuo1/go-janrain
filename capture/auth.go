@@ -7,6 +7,7 @@
 package capture
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
@@ -55,16 +56,14 @@ func (creds *ClientCredentials) Authorize(uri *url.URL, header http.Header, valu
 	}
 	sort.Strings(ps)
 	timestamp := time.Now().UTC().Format("2006-01-02 15:04:05")
-	tosign := uri.Path
-	tosign += "\n"
-	tosign += timestamp
-	tosign += "\n"
+	tosign := new(bytes.Buffer)
+	fmt.Fprintln(tosign, uri.Path)
+	fmt.Fprintln(tosign, timestamp)
 	for _, p := range ps {
-		tosign += p
-		tosign += "\n"
+		fmt.Fprintln(tosign, p)
 	}
 	hash := hmac.New(sha1.New, []byte(creds.Secret))
-	_, err := fmt.Fprint(hash, tosign)
+	_, err := hash.Write(tosign.Bytes())
 	if err != nil {
 		return err
 	}

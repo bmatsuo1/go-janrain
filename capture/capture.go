@@ -15,7 +15,7 @@ signature to API requests.
 	creds := capture.ClientCredentials{"myclientid", "myclientsecret"}
 	client := capture.NewClient("https://myapp.janraincapture.com", &creds)
 	resp, _ := client.Execute("/entity.count", nil, capture.Params{
-		"type_name": "user"
+		"type_name": "user",
 	})
 	for _, entity := range resp.Get("results").MustArray() {
 		// ...

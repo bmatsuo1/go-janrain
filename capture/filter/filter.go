@@ -6,8 +6,8 @@
 
 /*
 The filter package provides sereral helper methods for constructing filters used
-for to query entities with /entity.find and /entity.count. The package provides
-a couple ways to create filters.
+to query entities with /entity.find and /entity.count. The package provides a
+couple ways to create filters.
 
 The easiest way to create a simple filter is to use the New() function. It
 creates a filter constraining a single attribute relative to a given value.
@@ -36,7 +36,7 @@ with logical operators.
 		code string
 	}
 	func (org Organization) Filter() string {
-		return filter.New("organization =", MyOrg()).Filter()
+		return filter.New("organization =", org.code).Filter()
 	}
 
 	type MinAge int
@@ -160,7 +160,7 @@ func New(attrcomp string, val interface{}) Filter {
 	return Filter((&F{attrcomp, val}).String())
 }
 
-// add an additional constraint to the to filter.
+// add an additional constraint to the filter.
 func (filter Filter) And(attrcomp string, val interface{}) Filter {
 	return Filter(fmt.Sprintf("(%s) AND (%s)", filter, New(attrcomp, val)))
 }

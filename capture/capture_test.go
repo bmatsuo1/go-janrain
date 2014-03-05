@@ -14,4 +14,12 @@ func TestErrors(t *testing.T) {
 	if ctypeerr.Error() != "..." {
 		fmt.Errorf("unexpected content-type error message: %q", ctypeerr.Error())
 	}
+	var httperr error = HttpTransportError{fmt.Errorf("oop--")}
+	if httperr.Error() != "oop--" {
+		fmt.Errorf("unexpected http transport error message: %q", httperr.Error())
+	}
+	var remerr error = RemoteError{Kind: "bad", Description: "err msg"}
+	if remerr.Error() != "bad [0] err msg (response: null)" {
+		fmt.Errorf("unexpected remote error message: %q", remerr.Error())
+	}
 }

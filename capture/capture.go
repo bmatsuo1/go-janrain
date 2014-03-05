@@ -116,7 +116,8 @@ func NewRemoteError(js *simplejson.Json) RemoteError {
 }
 
 func (err RemoteError) Error() string {
-	return fmt.Sprintf("%s (%d) %s", err.Kind, err.Code, err.Description)
+	return fmt.Sprintf("%s [%d] %s (response: %v)",
+		err.Kind, err.Code, err.Description, err.Response)
 }
 
 // an error in http communication.

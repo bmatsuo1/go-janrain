@@ -141,5 +141,5 @@ func (err JsonDecoderError) Error() string {
 type ContentTypeError string
 
 func (err ContentTypeError) Error() string {
-	return fmt.Sprintf("unexpected content-type %q", err)
+	return fmt.Sprintf("unexpected content-type %q", string(err))
 }

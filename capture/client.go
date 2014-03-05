@@ -81,7 +81,7 @@ func NewClient(baseurl string, auth Authorization) *Client {
 
 // execute an API call with the Authorization used to initialize the client.
 func (client *Client) Execute(method string, header http.Header, params Params) (*simplejson.Json, error) {
-	return client.ExecuteAuth(nil, method, header, params)
+	return client.ExecuteAuth(client.auth, method, header, params)
 }
 
 // a set of params sent with every API call.
@@ -102,10 +102,6 @@ func (client *Client) ExecuteAuth(auth Authorization, method string, header http
 		return nil, err
 	}
 
-	if auth == nil {
-		auth = client.auth
-	}
-	//fmt.Println("auth ", auth)
 	if auth != nil {
 		err = auth.Authorize(uri, header, values)
 		if err != nil {

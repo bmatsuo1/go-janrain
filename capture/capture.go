@@ -17,9 +17,7 @@ signature to API requests.
 	resp, _ := client.Execute("/entity.count", nil, capture.Params{
 		"type_name": "user",
 	})
-	for _, entity := range resp.Get("results").MustArray() {
-		// ...
-	}
+	fmt.Println(resp.Get("total_count").MustInt())
 
 Access tokens
 

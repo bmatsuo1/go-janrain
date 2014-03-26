@@ -1,5 +1,7 @@
 [godoc.org]: http://go.pkgdoc.org/github.com/bmatsuo1/go-janrain/ "godoc.org"
 
+This package is experimental and its api is subject to change
+
 About
 =============
 

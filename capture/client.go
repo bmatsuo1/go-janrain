@@ -10,6 +10,7 @@ import (
 	"github.com/bitly/go-simplejson"
 
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -157,20 +158,23 @@ func (client *Client) perform(req *http.Request) (*simplejson.Json, error) {
 	if err != nil {
 		return nil, HttpTransportError{err}
 	}
-	defer resp.Body.Close()
+	r, err := ReadResponse(resp)
+	if err != nil {
+		// this could include some extra information
+		return nil, HttpTransportError{fmt.Errorf("unable to read http response: %v", err)}
+	}
 	switch mime := contentType(resp); mime {
 	case "application/json", "text/json":
-		dec := json.NewDecoder(resp.Body)
 		js := new(simplejson.Json)
-		err := dec.Decode(js)
+		err := json.Unmarshal(r.Body, js)
 		if err != nil {
-			return nil, JsonDecoderError{err}
+			return nil, JsonDecoderError{r, err}
 		}
 		if js.Get("stat").MustString() != "ok" {
-			return nil, NewRemoteError(js)
+			return nil, NewRemoteError(resp, js)
 		}
 		return js, nil
 	default:
-		return nil, ContentTypeError(mime)
+		return nil, &ContentTypeError{r}
 	}
 }

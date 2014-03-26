@@ -67,8 +67,10 @@ package capture
 import (
 	"github.com/bitly/go-simplejson"
 
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -157,6 +159,18 @@ func (err JsonDecoderError) HttpResponse() *HttpResponseData {
 	return err.r
 }
 
+type EncodingError struct {
+	Encoding string
+	Err      error
+	*HttpResponseData
+}
+
+func (err EncodingError) Error() string {
+	return fmt.Sprintf("error decoding %s data: %v", err.Encoding, err.Err)
+}
+
+var UnknownEncoding = fmt.Errorf("unknown encoding")
+
 // an unexpected content type returned by the API.
 type ContentTypeError struct {
 	*HttpResponseData
@@ -185,11 +199,36 @@ func (r *HttpResponseData) String() string {
 }
 
 func ReadResponse(resp *http.Response) (*HttpResponseData, error) {
-	p, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	var rd io.Reader
+	var err error
+	encoding := resp.Header.Get("Content-Encoding")
+	if encoding == "gzip" {
+		rd, err = gzip.NewReader(resp.Body)
+		if err != nil {
+			p, _ := ioutil.ReadAll(rd)
+			return nil, EncodingError{encoding, err, &HttpResponseData{
+				StatusCode: resp.StatusCode,
+				Header:     resp.Header,
+				Body:       p,
+			}}
+		}
+	} else if encoding != "" {
+		p, _ := ioutil.ReadAll(rd)
+		return nil, EncodingError{encoding, UnknownEncoding, &HttpResponseData{
+			StatusCode: resp.StatusCode,
+			Header:     resp.Header,
+			Body:       p,
+		}}
+	} else {
+		rd = resp.Body
+	}
+
+	p, err := ioutil.ReadAll(rd)
 	if err != nil {
 		return nil, err
 	}
-	resp.Body.Close()
 
 	r := &HttpResponseData{
 		StatusCode: resp.StatusCode,

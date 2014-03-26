@@ -31,6 +31,7 @@ func prepare(method string, uri *url.URL, header http.Header, values url.Values)
 	for k, v := range header {
 		req.Header[k] = v
 	}
+	req.Header.Add("Accept-Encoding", "gzip") // set?
 	return req, nil
 }
 

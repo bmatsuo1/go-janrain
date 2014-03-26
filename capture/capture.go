@@ -67,7 +67,10 @@ package capture
 import (
 	"github.com/bitly/go-simplejson"
 
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"time"
 )
 
@@ -99,25 +102,36 @@ func Timestamp(t time.Time) string {
 
 // an error returned by Capture.
 type RemoteError struct {
+	RequestId   string
 	Code        int
 	Kind        string
 	Description string
 	Response    *simplejson.Json
+	*HttpResponseData
 }
 
 // construct an error from a Capture response.
-func NewRemoteError(js *simplejson.Json) RemoteError {
+func NewRemoteError(resp *http.Response, js *simplejson.Json) RemoteError {
 	return RemoteError{
+		RequestId:   js.Get("request_id").MustString(),
 		Code:        js.Get("code").MustInt(),
 		Kind:        js.Get("error").MustString(),
 		Description: js.Get("error_description").MustString(),
 		Response:    js,
+		HttpResponseData: &HttpResponseData{
+			StatusCode: resp.StatusCode,
+			Header:     resp.Header,
+			Body:       []byte(jsonStringer(js).String()), // totally gnarly. this is not a good thing
+		},
 	}
 }
 
+func (err RemoteError) HttpResponse() *HttpResponseData {
+	return err.HttpResponseData
+}
+
 func (err RemoteError) Error() string {
-	return fmt.Sprintf("%s [%d] %s (response: %v)",
-		err.Kind, err.Code, err.Description, err.Response)
+	return fmt.Sprintf("[%s] %s", err.Kind, err.Description)
 }
 
 // an error in http communication.
@@ -131,6 +145,7 @@ func (err HttpTransportError) Error() string {
 
 // an error decoding a JSON response from the API.
 type JsonDecoderError struct {
+	r   *HttpResponseData
 	Err error
 }
 
@@ -138,9 +153,62 @@ func (err JsonDecoderError) Error() string {
 	return err.Err.Error()
 }
 
-// an unexpected content type returned by the API.
-type ContentTypeError string
+func (err JsonDecoderError) HttpResponse() *HttpResponseData {
+	return err.r
+}
 
-func (err ContentTypeError) Error() string {
-	return fmt.Sprintf("unexpected content-type %q", string(err))
+// an unexpected content type returned by the API.
+type ContentTypeError struct {
+	*HttpResponseData
+}
+
+func (err *ContentTypeError) Error() string {
+	return fmt.Sprintf("unexpected content-type %q", err.Header.Get("Content-Type"))
+}
+
+func (err *ContentTypeError) HttpResponse() *HttpResponseData {
+	return err.HttpResponseData
+}
+
+type HttpResponse interface {
+	HttpResponse() *HttpResponseData
+}
+
+type HttpResponseData struct {
+	StatusCode int
+	Header     http.Header
+	Body       []byte
+}
+
+func (r *HttpResponseData) String() string {
+	return fmt.Sprintf("[%d] %q", r.StatusCode, r.Body)
+}
+
+func ReadResponse(resp *http.Response) (*HttpResponseData, error) {
+	p, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	resp.Body.Close()
+
+	r := &HttpResponseData{
+		StatusCode: resp.StatusCode,
+		Header:     resp.Header,
+		Body:       p,
+	}
+	return r, err
+}
+
+type jstringer struct {
+	v interface{}
+}
+
+func (js jstringer) String() string {
+	p, _ := json.Marshal(js.v)
+	return string(p)
+}
+
+// a type that stringifies as json.
+func jsonStringer(v interface{}) fmt.Stringer {
+	return jstringer{v}
 }
